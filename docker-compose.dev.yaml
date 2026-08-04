@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: booking-dev
+    environment:
+      NODE_ENV: development
+      PORT: 4000
+    ports:
+      - '4000:4000'
+    volumes:
+      - .:/app
+      - /app/node_modules
+    networks:
+      - booking-network
+
+networks:
+  booking-network:
+    driver: bridge

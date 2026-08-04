@@ -1,0 +1,46 @@
+[
+  {
+    "id": "11111111-1111-4111-8111-111111111111",
+    "firstName": "Alice",
+    "lastName": "Johnson",
+    "email": "alice@example.com",
+    "passwordHash": "$2b$10$hashed-alice-password-001",
+    "phoneNumber": "+1-555-0101",
+    "role": "GUEST",
+    "createdAt": "2026-01-12T09:30:00.000Z",
+    "updatedAt": "2026-07-20T14:00:00.000Z"
+  },
+  {
+    "id": "22222222-2222-4222-8222-222222222222",
+    "firstName": "Bob",
+    "lastName": "Smith",
+    "email": "bob@example.com",
+    "passwordHash": "$2b$10$hashed-bob-password-002",
+    "phoneNumber": "+1-555-0102",
+    "role": "GUEST",
+    "createdAt": "2026-02-03T11:15:00.000Z",
+    "updatedAt": "2026-07-22T09:45:00.000Z"
+  },
+  {
+    "id": "33333333-3333-4333-8333-333333333333",
+    "firstName": "Carol",
+    "lastName": "White",
+    "email": "carol@example.com",
+    "passwordHash": "$2b$10$hashed-carol-password-003",
+    "phoneNumber": "+1-555-0103",
+    "role": "HOTEL_STAFF",
+    "createdAt": "2026-03-01T08:00:00.000Z",
+    "updatedAt": "2026-07-25T16:30:00.000Z"
+  },
+  {
+    "id": "44444444-4444-4444-8444-444444444444",
+    "firstName": "David",
+    "lastName": "Lee",
+    "email": "david@example.com",
+    "passwordHash": "$2b$10$hashed-david-password-004",
+    "phoneNumber": "+1-555-0104",
+    "role": "ADMIN",
+    "createdAt": "2026-01-05T10:00:00.000Z",
+    "updatedAt": "2026-07-30T12:20:00.000Z"
+  }
+]

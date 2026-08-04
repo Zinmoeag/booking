@@ -1,0 +1,28 @@
+FROM node:24-alpine3.21
+
+# Install dependencies for development
+# RUN apk add --no-cache \
+#     curl \
+#     git
+
+RUN apk update && apk add --no-cache bash
+
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+
+# Install dependencies
+RUN npm install
+
+# Copy source code
+COPY . .
+
+# Expose port
+EXPOSE 4000
+
+# Set development environment
+ENV NODE_ENV=development
+
+# Start development server with hot reloading
+CMD ["npm", "run", "dev"]

@@ -1,0 +1,42 @@
+[
+  {
+    "id": "d0000001-0001-4001-8001-000000000001",
+    "name": "Free WiFi",
+    "category": "HOTEL"
+  },
+  {
+    "id": "d0000002-0002-4002-8002-000000000002",
+    "name": "Swimming Pool",
+    "category": "HOTEL"
+  },
+  {
+    "id": "d0000003-0003-4003-8003-000000000003",
+    "name": "Gym",
+    "category": "HOTEL"
+  },
+  {
+    "id": "d0000004-0004-4004-8004-000000000004",
+    "name": "Parking",
+    "category": "HOTEL"
+  },
+  {
+    "id": "d0000005-0005-4005-8005-000000000005",
+    "name": "Breakfast Included",
+    "category": "HOTEL"
+  },
+  {
+    "id": "d0000006-0006-4006-8006-000000000006",
+    "name": "Air Conditioning",
+    "category": "ROOM"
+  },
+  {
+    "id": "d0000007-0007-4007-8007-000000000007",
+    "name": "Mini Bar",
+    "category": "ROOM"
+  },
+  {
+    "id": "d0000008-0008-4008-8008-000000000008",
+    "name": "Ocean View",
+    "category": "ROOM"
+  }
+]

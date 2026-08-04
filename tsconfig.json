@@ -1,0 +1,27 @@
+{
+  "compilerOptions": {
+    "moduleResolution": "node",
+    "target": "es2020",
+    "module": "commonjs",
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "strict": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "sourceMap": true, // Generate source maps for debugging
+    "outDir": "dist", // Output compiled files to the `dist` folder
+    "rootDir": "src", // Define the root directory for your source files
+    "baseUrl": ".", // Required for path aliases
+    "skipLibCheck": true, // Skip type-checking of library files
+    "paths": {
+      "@/*": ["src/*"]
+    }
+  },
+  "ts-node": {
+    // Configuration for ts-node
+    "transpileOnly": true, // Speeds up development
+    "require": ["tsconfig-paths/register"] // Enable path aliases in ts-node
+  },
+  "include": ["src/**/*.ts", "src/**/*.js"],
+  "exclude": ["node_modules", "dist", "tests"]
+}

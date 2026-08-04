@@ -1,0 +1,38 @@
+[
+  {
+    "id": "b1000001-0001-4001-8001-000000000001",
+    "bookingId": "e0000001-0001-4001-8001-000000000001",
+    "amount": 790,
+    "paymentMethod": "CREDIT_CARD",
+    "status": "COMPLETED",
+    "transactionRef": "TXN-20260715-001",
+    "paidAt": "2026-07-15T10:10:00.000Z"
+  },
+  {
+    "id": "b1000002-0002-4002-8002-000000000002",
+    "bookingId": "e0000002-0002-4002-8002-000000000002",
+    "amount": 420,
+    "paymentMethod": "PAYPAL",
+    "status": "PENDING",
+    "transactionRef": null,
+    "paidAt": null
+  },
+  {
+    "id": "b1000003-0003-4003-8003-000000000003",
+    "bookingId": "e0000003-0003-4003-8003-000000000003",
+    "amount": 700,
+    "paymentMethod": "CREDIT_CARD",
+    "status": "COMPLETED",
+    "transactionRef": "TXN-20260728-002",
+    "paidAt": "2026-07-28T09:20:00.000Z"
+  },
+  {
+    "id": "b1000004-0004-4004-8004-000000000004",
+    "bookingId": "e0000004-0004-4004-8004-000000000004",
+    "amount": 260,
+    "paymentMethod": "BANK_TRANSFER",
+    "status": "REFUNDED",
+    "transactionRef": "TXN-20260605-003",
+    "paidAt": "2026-06-12T14:00:00.000Z"
+  }
+]

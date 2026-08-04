@@ -1,0 +1,28 @@
+[
+  {
+    "id": "55555555-5555-4555-8555-555555555555",
+    "name": "Grand Horizon Hotel",
+    "description": "A luxury downtown hotel with rooftop dining and a full-service spa.",
+    "addressLine": "500 Fifth Avenue",
+    "city": "New York",
+    "country": "USA",
+    "postalCode": "10018",
+    "latitude": 40.756,
+    "longitude": -73.983,
+    "rating": 4.6,
+    "createdAt": "2026-01-10T09:00:00.000Z"
+  },
+  {
+    "id": "66666666-6666-4666-8666-666666666666",
+    "name": "Sunset Bay Resort",
+    "description": "Beachfront resort with private cabanas and infinity pools.",
+    "addressLine": "1 Ocean Drive",
+    "city": "Miami",
+    "country": "USA",
+    "postalCode": "33139",
+    "latitude": 25.7617,
+    "longitude": -80.1918,
+    "rating": 4.8,
+    "createdAt": "2026-01-20T14:30:00.000Z"
+  }
+]

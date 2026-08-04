@@ -1,0 +1,42 @@
+[
+  {
+    "id": "a1000001-0001-4001-8001-000000000001",
+    "bookingRoomId": "f0000001-0001-4001-8001-000000000001",
+    "fullName": "Alice Johnson",
+    "email": "alice@example.com",
+    "isPrimary": true,
+    "idProofNumber": "PA-123456"
+  },
+  {
+    "id": "a1000002-0002-4002-8002-000000000002",
+    "bookingRoomId": "f0000002-0002-4002-8002-000000000002",
+    "fullName": "Mark Johnson",
+    "email": "mark@example.com",
+    "isPrimary": false,
+    "idProofNumber": "DL-987654"
+  },
+  {
+    "id": "a1000003-0003-4003-8003-000000000003",
+    "bookingRoomId": "f0000003-0003-4003-8003-000000000003",
+    "fullName": "Bob Smith",
+    "email": "bob@example.com",
+    "isPrimary": true,
+    "idProofNumber": null
+  },
+  {
+    "id": "a1000004-0004-4004-8004-000000000004",
+    "bookingRoomId": "f0000004-0004-4004-8004-000000000004",
+    "fullName": "Alice Johnson",
+    "email": "alice@example.com",
+    "isPrimary": true,
+    "idProofNumber": null
+  },
+  {
+    "id": "a1000005-0005-4005-8005-000000000005",
+    "bookingRoomId": "f0000005-0005-4005-8005-000000000005",
+    "fullName": "Bob Smith",
+    "email": "bob@example.com",
+    "isPrimary": true,
+    "idProofNumber": "PA-555555"
+  }
+]
