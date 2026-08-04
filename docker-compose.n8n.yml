@@ -1,0 +1,43 @@
+services:
+  n8n:
+    image: docker.n8n.io/n8nio/n8n
+    container_name: n8n
+    restart: unless-stopped
+    # ⚠ `--tunnel` flag က n8n 2.x မှာ ဖယ်ရှားပြီးသား ဖြစ်လို့ မထည့်ရဘူး။
+    #   error မတက်ဘဲ တိတ်တဆိတ် လျစ်လျူရှုခံရပြီး webhook base က
+    #   https://n8n.test:5678 ဖြစ်သွားတယ် → Telegram က "Webhook can be set up
+    #   only on ports 80, 88, 443 or 8443" လို့ ငြင်းတယ်။
+    #   အောက်က WEBHOOK_URL ကို ကြည့်ပါ။
+    ports:
+      # Caddy က host ပေါ်က localhost:5678 ကို proxy လုပ်တာမို့
+      # ပြင်ပ network ကို ဖွင့်ပေးစရာ မလိုတော့ဘူး
+      - "127.0.0.1:5678:5678"
+    environment:
+      GENERIC_TIMEZONE: America/New_York
+      TZ: America/New_York
+      N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS: "true"
+      # --- reverse proxy (Caddy) နောက်ကွယ်မှာ run ဖို့ ---
+      N8N_HOST: n8n.test
+      N8N_PROTOCOL: https
+      N8N_PROXY_HOPS: "1"
+      # ဒါမထည့်ရင် n8n က editor link တွေကို HOST+PROTOCOL+default port ကနေတွက်ပြီး
+      # https://n8n.test:5678 လို့ ထုတ်တယ်။ 5678 က HTTP port မို့ browser မှာ
+      # ERR_SSL_PROTOCOL_ERROR တက်တယ် (HTTPS က Caddy ရဲ့ 443 မှာ)။
+      N8N_EDITOR_BASE_URL: https://n8n.test
+      # --- Telegram webhook အတွက် public URL ---
+      # n8n 2.x မှာ N8N_WEBHOOK_URL က မှန်တဲ့နာမည် — WEBHOOK_URL က deprecated
+      # ဖြစ်ပြီး startup log မှာ သတိပေးတယ် (test/production webhook နှစ်မျိုးလုံးအတွက်)။
+      # Telegram က publicly trusted cert + port 80/88/443/8443 ကိုပဲ လက်ခံလို့
+      # https://n8n.test (private CA) နဲ့ မရဘူး — tunnel တစ်ခု ဖြတ်ရမယ်။
+      #   ngrok http 127.0.0.1:5678
+      # ⚠ ngrok free မှာ restart တိုင်း URL ပြောင်းတယ် — ပြောင်းတိုင်း ဒီတန်ဖိုးကို
+      #   ပြင်ပြီး n8n restart လုပ်၊ Telegram Trigger ကို re-activate လုပ်ပါ။
+      #   တည်ငြိမ်ချင်ရင် Cloudflare Tunnel (named) သုံးပါ။
+      N8N_WEBHOOK_URL: https://4a87-2a09-bac1-6520-8-00-2e4-96.ngrok-free.app/
+    volumes:
+      - n8n_data:/home/node/.n8n
+
+volumes:
+  n8n_data:
+    # ရှိပြီးသား volume ကို ဆက်သုံးဖို့ (workflow/credential data အားလုံး ဒီထဲမှာ)
+    external: true

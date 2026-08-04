@@ -1,0 +1,7 @@
+n8n.test {
+	# .test က public TLD မဟုတ်လို့ Caddy ရဲ့ local CA ကို သုံးရမယ်
+	# (မထည့်ရင် Let's Encrypt ကို တောင်းပြီး fail ဖြစ်မယ်)
+	tls internal
+
+	reverse_proxy localhost:5678
+}

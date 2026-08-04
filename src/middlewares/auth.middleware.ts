@@ -1,5 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
 
+import { describeSecurity } from '@/app/core/openapi/metadata';
 import { AppError, errorKinds } from '@/app/error';
 import JwtService from '@/app/helpers/JWT/jwt.service';
 import { UserRole } from '@/types/database';
@@ -63,7 +64,7 @@ export async function authenticate(
 }
 
 export function authorize(...roles: UserRole[]) {
-  return (req: Request, _res: Response, next: NextFunction) => {
+  const guard = (req: Request, _res: Response, next: NextFunction) => {
     const user = req.user;
     if (!user) {
       return next(AppError.new(errorKinds.notAuthorized, 'Not authenticated'));
@@ -75,4 +76,7 @@ export function authorize(...roles: UserRole[]) {
     }
     return next();
   };
+
+  // Tag the guard so the OpenAPI generator can document the required roles
+  return describeSecurity(guard, { roles });
 }

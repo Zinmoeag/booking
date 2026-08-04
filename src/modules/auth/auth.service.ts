@@ -1,5 +1,7 @@
 import bcrypt from 'bcrypt';
+import { SignOptions } from 'jsonwebtoken';
 
+import AppConfig from '@/app/config/app.config';
 import { AppError, errorKinds } from '@/app/error';
 import JwtService from '@/app/helpers/JWT/jwt.service';
 import { User, UserRole } from '@/types/database';
@@ -13,8 +15,11 @@ import {
 import { AuthRepository } from './auth.repository';
 import { AuthResult, TokenPair } from './auth.types';
 
-const ACCESS_TOKEN_TTL = '15m';
 const REFRESH_TOKEN_TTL = '7d';
+
+// access token 수명은 .env 의 ACCESS_TOKEN_TTL 로 조정 (기본 15m)
+const getAccessTokenTtl = () =>
+  AppConfig.getConfig('ACCESS_TOKEN_TTL') as SignOptions['expiresIn'];
 
 const toTokenPayload = (user: {
   id: string;
@@ -205,7 +210,7 @@ export class AuthService extends BaseService<
     const payload = toTokenPayload(user);
 
     const accessToken = JwtService.signToken('ACCESS_TOKEN_PRIVATE_KEY', payload, {
-      expiresIn: ACCESS_TOKEN_TTL,
+      expiresIn: getAccessTokenTtl(),
     });
 
     const refreshToken = JwtService.signToken(

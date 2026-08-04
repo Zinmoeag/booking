@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from 'express';
 import { z } from 'zod';
 
+import { describeValidation } from '@/app/core/openapi/metadata';
 import { AppError, errorKinds } from '@/app/error';
 
 interface ValidateProps {
@@ -24,7 +25,7 @@ export class ValidationMiddleware {
   }
 
   private validate(props: ValidateProps) {
-    return (req: Request, res: Response, next: NextFunction) => {
+    const handler = (req: Request, res: Response, next: NextFunction) => {
       const { schema, target } = props;
       const validation = schema.safeParse(
         target === 'BODY' ? req.body ?? {} : req.query ?? {}
@@ -51,6 +52,9 @@ export class ValidationMiddleware {
 
       next();
     };
+
+    // Tag the handler so the OpenAPI generator can recover the zod schema
+    return describeValidation(handler, props.target, props.schema);
   }
 }
 

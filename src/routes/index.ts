@@ -4,6 +4,7 @@ import { ZodError } from 'zod';
 
 import AppConfig from '@/app/config/app.config';
 import { HttpLogger, SysLogger } from '@/app/config/logger';
+import { createSwaggerRouter } from '@/app/core/openapi/swagger';
 import { HttpDetailResponse } from '@/app/core/Response/HttpResponse';
 import { AppError, ErrorBase, errorKinds, SysError } from '@/app/error';
 import { AmenityController } from '@/modules/amenity/amenity.controller';
@@ -32,6 +33,9 @@ router.use(mountController(new AmenityController()));
 router.use(mountController(new BookingController()));
 router.use(mountController(new PaymentController()));
 router.use(mountController(new ReviewController()));
+
+// Must come after every controller so the routing table is complete
+router.use(createSwaggerRouter());
 
 router.get(
   '/health-check',
