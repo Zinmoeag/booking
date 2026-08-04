@@ -1,0 +1,179 @@
+import { workflow, node, trigger, ifElse, merge, newCredential, expr } from '@n8n/workflow-sdk';
+
+// ===== TELEGRAM BOT WORKFLOW - SWITCH CASE VERSION =====
+// Clean switch-case routing for hotel booking commands
+// Inline keyboard buttons: 🏨 Hotels, 📋 My Bookings, 👤 Me, 🔑 Login
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PRIMARY FLOW: Router with Switch-Case Logic
+// ─────────────────────────────────────────────────────────────────────────────
+
+const switchRouter = node({
+  type: 'n8n-nodes-base.switch',
+  version: 1,
+  config: {
+    name: 'Switch Case Router',
+    position: [20, 300],
+    parameters: {
+      // Define all possible cases with their outputs
+      cases: [
+        // Main intent cases
+        { case: "menu.start", output: "startMenu" },
+        { case: "auth.login", output: "loginFlow" },
+        { case: "auth.register", output: "registerFlow" },
+        { case: "auth.me", output: "authMeFlow" },
+        { case: "need_login", output: "needLoginFlow" },
+        { case: "session_expired", output: "sessionExpiredFlow" },
+        { case: "hotels.list", output: "hotelsListFlow" },
+        { case: "hotel.detail", output: "hotelDetailFlow" },
+        { case: "bookings.list", output: "bookingsListFlow" },
+        { case: "bookings.create", output: "bookingCreateFlow" },
+        { case: "bookings.cancel", output: "bookingCancelFlow" },
+        { case: "review.create", output: "reviewCreateFlow" },
+        { case: "error", output: "errorFlow" },
+        { case: "help", output: "helpFlow" },
+      ],
+      // Default for unmatched cases
+      default: "defaultFlow",
+    },
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MAIN N8N WORKFLOW DEFINITION
+// ─────────────────────────────────────────────────────────────────────────────
+
+export default workflow('hotel-booking-telegram-bot-switch', 'Hotel Booking — Telegram Bot (Switch-Case Version)')
+  .add(
+    // 1. Telegram Trigger - captures both messages and callbacks
+    trigger({
+      type: 'n8n-nodes-base.telegramTrigger',
+      version: 1.4,
+      config: {
+        name: 'Telegram Trigger',
+        position: [-220, 380],
+        parameters: { updates: ['message', 'callback_query'] },
+        credentials: { telegramApi: newCredential('Telegram Bot') }
+      }
+    })
+  )
+  .to(switchRouter)  // 2. Route through switch-case router
+  .to(
+    // Simple routing based on switch output
+    ifElse({
+      version: 2.2,
+      config: {
+        name: 'Route Based on Switch Output',
+        position: [260, 380],
+        parameters: {
+          conditions: {
+            options: { caseSensitive: true, leftValue: '', typeValidation: 'loose' },
+            conditions: [
+              {
+                leftValue: expr('{{ $json.output }}'),
+                rightValue: "startMenu",
+                operator: { type: 'string', operation: 'equals' }
+              }
+            ],
+            combinator: 'and'
+          }
+        }
+      }
+    })
+      .onTrue(
+        // Start menu flow
+        trigger({
+          type: 'n8n-nodes-base.telegram',
+          version: 1.2,
+          config: {
+            name: 'Send Start Menu',
+            position: [520, 200],
+            credentials: { telegramApi: newCredential('Telegram Bot') },
+            parameters: {
+              resource: 'message',
+              operation: 'sendMessage',
+              chatId: expr('{{ $json.chatId }}'),
+              text: '<b>🏨 Hotel Booking Bot</b>\n\nWhat would you like to do?',
+              replyMarkup: 'inlineKeyboard',
+              inlineKeyboard: {
+                rows: [
+                  {
+                    row: {
+                      buttons: [
+                        { text: '🏨 Hotels', additionalFields: { callback_data: 'hotels' } },
+                        { text: '📋 My Bookings', additionalFields: { callback_data: 'mybookings' } }
+                      ]
+                    }
+                  },
+                  {
+                    row: {
+                      buttons: [
+                        { text: '👤 Me', additionalFields: { callback_data: 'me' } },
+                        { text: '🔑 Login', additionalFields: { callback_data: 'login' } }
+                      ]
+                    }
+                  }
+                ]
+              },
+              additionalFields: {
+                parse_mode: 'HTML',
+                appendAttribution: false,
+                disable_web_page_preview: true
+              }
+            }
+          }
+        })
+      )
+      )
+      .onFalse(
+        // For other cases, just pass through for now (simplified for demo)
+        node({
+          type: 'n8n-nodes-base.code',
+          version: 2,
+          config: {
+            name: 'Pass Through',
+            position: [520, 400],
+            parameters: {
+              mode: 'runOnceForAllItems',
+              jsCode: '// Simple pass-through for routing demonstration\nreturn $input.map(item => ({ json: item.json }));'
+            }
+          }
+        })
+      )
+    )
+  );
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SUPPORTING NODES (kept minimal for demonstration)
+// ─────────────────────────────────────────────────────────────────────────────
+
+// Error handling for unknown cases
+const defaultErrorHandler = node({
+  type: 'n8n-nodes-base.code',
+  version: 2,
+  config: {
+    name: 'Default Error Handler',
+    position: [740, 200],
+    parameters: {
+      mode: 'runOnceForAllItems',
+      jsCode: "// Handle unmatched intent cases\nconst intent = ${{ $json.intent }} || 'unknown';\nreturn [{ json: { reply: '❓ I received: ' + intent + ' — please send a valid command. Type /help for options.' }];"
+    }
+  }
+});
+
+// Simple API response handler (placeholder)
+const simpleApiHandler = node({
+  type: 'n8n-nodes-base.code',
+  version: 2,
+  config: {
+    name: 'Simple API Handler',
+    position: [960, 300],
+    parameters: {
+      mode: 'runOnceForAllItems',
+      jsCode: "// Sample API response handler\nreturn [{ json: { reply: '✅ API call processed successfully!' }];"
+    }
+  }
+});
+
+// Export the workflow
+export default workflow;

@@ -34,11 +34,24 @@ const boolCondition = (id, expression) => ({
   combinator: 'and',
 });
 
+const equalsCondition = (id, expression, value) => ({
+  options: { caseSensitive: true, leftValue: '', typeValidation: 'loose', version: 2 },
+  conditions: [
+    {
+      id,
+      leftValue: expression,
+      rightValue: value,
+      operator: { type: 'string', operation: 'equals' },
+    },
+  ],
+  combinator: 'and',
+});
+
 const workflow = {
   name: 'Hotel Booking — Telegram Bot',
   nodes: [
     {
-      parameters: { updates: ['message'], additionalFields: {} },
+      parameters: { updates: ['message', 'callback_query'], additionalFields: {} },
       id: 'a1000000-0000-4000-8000-000000000001',
       name: 'Telegram Trigger',
       type: 'n8n-nodes-base.telegramTrigger',
@@ -52,17 +65,111 @@ const workflow = {
     {
       parameters: {
         conditions: boolCondition(
+          'b0000000-0000-4000-8000-000000000004',
+          '={{ $json.isCallback }}'
+        ),
+        looseTypeValidation: true,
+        options: {},
+      },
+      id: 'a1000000-0000-4000-8000-000000000003',
+      name: 'Is Callback?',
+      type: 'n8n-nodes-base.if',
+      typeVersion: 2.2,
+      position: [260, 200],
+    },
+    {
+      parameters: {
+        resource: 'callback',
+        operation: 'answerQuery',
+        queryId: '={{ $json.callbackQueryId }}',
+        additionalFields: {},
+      },
+      id: 'a1000000-0000-4000-8000-000000000004',
+      name: 'Answer Callback',
+      type: 'n8n-nodes-base.telegram',
+      typeVersion: 1.2,
+      position: [520, 120],
+      // Answering can fail for old callbacks; it must not kill the response.
+      onError: 'continueRegularOutput',
+    },
+    {
+      parameters: { mode: 'append' },
+      id: 'a1000000-0000-4000-8000-000000000005',
+      name: 'Merge',
+      type: 'n8n-nodes-base.merge',
+      typeVersion: 3.2,
+      position: [520, 300],
+    },
+    {
+      parameters: {
+        conditions: equalsCondition(
+          'b0000000-0000-4000-8000-000000000005',
+          '={{ $json.intent }}',
+          'menu.start'
+        ),
+        looseTypeValidation: true,
+        options: {},
+      },
+      id: 'a1000000-0000-4000-8000-000000000006',
+      name: 'Is /start menu?',
+      type: 'n8n-nodes-base.if',
+      typeVersion: 2.2,
+      position: [760, 300],
+    },
+    {
+      parameters: {
+        resource: 'message',
+        operation: 'sendMessage',
+        chatId: '={{ $json.chatId }}',
+        text: '<b>🏨 Hotel Booking Bot</b>\n\nWhat would you like to do?',
+        replyMarkup: 'inlineKeyboard',
+        inlineKeyboard: {
+          rows: [
+            {
+              row: {
+                buttons: [
+                  { text: '🏨 Hotels', additionalFields: { callback_data: 'hotels' } },
+                  { text: '📋 My Bookings', additionalFields: { callback_data: 'mybookings' } },
+                ],
+              },
+            },
+            {
+              row: {
+                buttons: [
+                  { text: '👤 Me', additionalFields: { callback_data: 'me' } },
+                  { text: '🔑 Login', additionalFields: { callback_data: 'login' } },
+                ],
+              },
+            },
+          ],
+        },
+        additionalFields: {
+          parse_mode: 'HTML',
+          appendAttribution: false,
+          disable_web_page_preview: true,
+        },
+      },
+      id: 'a1000000-0000-4000-8000-000000000007',
+      name: 'Send Start Menu',
+      type: 'n8n-nodes-base.telegram',
+      typeVersion: 1.2,
+      position: [1000, 300],
+    },
+
+    {
+      parameters: {
+        conditions: boolCondition(
           'b0000000-0000-4000-8000-000000000001',
           '={{ $json.deleteUserMessage }}'
         ),
         looseTypeValidation: true,
         options: {},
       },
-      id: 'a1000000-0000-4000-8000-000000000003',
+      id: 'a1000000-0000-4000-8000-000000000008',
       name: 'Credentials in the message?',
       type: 'n8n-nodes-base.if',
       typeVersion: 2.2,
-      position: [260, 640],
+      position: [1000, 520],
     },
     {
       parameters: {
@@ -71,11 +178,11 @@ const workflow = {
         chatId: '={{ $json.chatId }}',
         messageId: '={{ $json.messageId }}',
       },
-      id: 'a1000000-0000-4000-8000-000000000004',
+      id: 'a1000000-0000-4000-8000-000000000009',
       name: 'Delete Credential Message',
       type: 'n8n-nodes-base.telegram',
       typeVersion: 1.2,
-      position: [520, 640],
+      position: [1240, 520],
       // Deleting fails in groups without admin rights, and on old messages.
       // That must never take the reply down with it.
       onError: 'continueRegularOutput',
@@ -90,11 +197,11 @@ const workflow = {
         looseTypeValidation: true,
         options: {},
       },
-      id: 'a1000000-0000-4000-8000-000000000005',
+      id: 'a1000000-0000-4000-8000-00000000000a',
       name: 'Access token expired?',
       type: 'n8n-nodes-base.if',
       typeVersion: 2.2,
-      position: [260, 300],
+      position: [1000, 380],
     },
     {
       parameters: {
@@ -106,18 +213,18 @@ const workflow = {
         jsonBody: '={{ JSON.stringify({ refreshToken: $json.refreshToken }) }}',
         options: { response: { response: { fullResponse: true, neverError: true } } },
       },
-      id: 'a1000000-0000-4000-8000-000000000006',
+      id: 'a1000000-0000-4000-8000-00000000000b',
       name: 'Refresh Token',
       type: 'n8n-nodes-base.httpRequest',
       typeVersion: 4.2,
-      position: [520, 180],
+      position: [1240, 260],
       onError: 'continueRegularOutput',
     },
 
     codeNode(
       'Apply Tokens',
-      'a1000000-0000-4000-8000-000000000007',
-      [760, 180],
+      'a1000000-0000-4000-8000-00000000000c',
+      [1480, 260],
       'apply-tokens.js'
     ),
 
@@ -130,11 +237,11 @@ const workflow = {
         looseTypeValidation: true,
         options: {},
       },
-      id: 'a1000000-0000-4000-8000-000000000008',
+      id: 'a1000000-0000-4000-8000-00000000000d',
       name: 'Needs the API?',
       type: 'n8n-nodes-base.if',
       typeVersion: 2.2,
-      position: [1000, 380],
+      position: [1720, 380],
     },
     {
       parameters: {
@@ -154,18 +261,18 @@ const workflow = {
           timeout: 15000,
         },
       },
-      id: 'a1000000-0000-4000-8000-000000000009',
+      id: 'a1000000-0000-4000-8000-00000000000e',
       name: 'Booking API',
       type: 'n8n-nodes-base.httpRequest',
       typeVersion: 4.2,
-      position: [1240, 280],
+      position: [1960, 280],
       onError: 'continueRegularOutput',
     },
 
     codeNode(
       'Format Reply',
-      'a1000000-0000-4000-8000-00000000000a',
-      [1480, 280],
+      'a1000000-0000-4000-8000-00000000000f',
+      [2200, 280],
       'format-reply.js'
     ),
 
@@ -179,18 +286,28 @@ const workflow = {
           disable_web_page_preview: true,
         },
       },
-      id: 'a1000000-0000-4000-8000-00000000000b',
+      id: 'a1000000-0000-4000-8000-000000000010',
       name: 'Send Reply',
       type: 'n8n-nodes-base.telegram',
       typeVersion: 1.2,
-      position: [1740, 380],
+      position: [2440, 380],
     },
   ],
 
   connections: {
     'Telegram Trigger': { main: [[{ node: 'Router', type: 'main', index: 0 }]] },
-    Router: {
+    Router: { main: [[{ node: 'Is Callback?', type: 'main', index: 0 }]] },
+    'Is Callback?': {
       main: [
+        [{ node: 'Answer Callback', type: 'main', index: 0 }],
+        [{ node: 'Merge', type: 'main', index: 1 }],
+      ],
+    },
+    'Answer Callback': { main: [[{ node: 'Merge', type: 'main', index: 0 }]] },
+    Merge: { main: [[{ node: 'Is /start menu?', type: 'main', index: 0 }]] },
+    'Is /start menu?': {
+      main: [
+        [{ node: 'Send Start Menu', type: 'main', index: 0 }],
         [
           { node: 'Access token expired?', type: 'main', index: 0 },
           { node: 'Credentials in the message?', type: 'main', index: 0 },

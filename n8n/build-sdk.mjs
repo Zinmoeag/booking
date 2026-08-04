@@ -34,11 +34,33 @@ const boolIf = (name, flag, position) => `ifElse({
   }
 })`;
 
-const sdk = `import { workflow, node, trigger, ifElse, newCredential, expr } from '@n8n/workflow-sdk';
+// A string-equals IF.
+const equalsIf = (name, flag, value, position) => `ifElse({
+  version: 2.2,
+  config: {
+    name: ${JSON.stringify(name)},
+    position: [${position}],
+    parameters: {
+      conditions: {
+        options: { caseSensitive: true, leftValue: '', typeValidation: 'loose' },
+        conditions: [
+          {
+            leftValue: expr('{{ $json.${flag} }}'),
+            rightValue: ${JSON.stringify(value)},
+            operator: { type: 'string', operation: 'equals' }
+          }
+        ],
+        combinator: 'and'
+      }
+    }
+  }
+})`;
 
-// Telegram → Router → (refresh if the access token lapsed) → one generic API
-// call → formatted reply. Adding a command means editing the Code-node sources
-// in n8n/nodes/, never this graph.
+const sdk = `import { workflow, node, trigger, ifElse, merge, newCredential, expr } from '@n8n/workflow-sdk';
+
+// Telegram → Router → (answer inline-keyboard callback) → menu or the existing
+// API chain. Callback data is treated as the equivalent slash command, so the
+// buttons reuse the same intents/formatting as typed commands.
 
 const telegramTrigger = trigger({
   type: 'n8n-nodes-base.telegramTrigger',
@@ -46,7 +68,7 @@ const telegramTrigger = trigger({
   config: {
     name: 'Telegram Trigger',
     position: [-220, 380],
-    parameters: { updates: ['message'] },
+    parameters: { updates: ['message', 'callback_query'] },
     credentials: { telegramApi: newCredential('Telegram Bot') }
   }
 });
@@ -61,14 +83,87 @@ const router = node({
   }
 });
 
-const credentialsCheck = ${boolIf('Credentials in the message?', 'deleteUserMessage', '260, 640')};
+const isCallback = ${boolIf('Is Callback?', 'isCallback', '260, 200')};
+
+const answerCallback = node({
+  type: 'n8n-nodes-base.telegram',
+  version: 1.2,
+  config: {
+    name: 'Answer Callback',
+    position: [520, 120],
+    // Answering can fail for old callbacks; it must not kill the response.
+    onError: 'continueRegularOutput',
+    parameters: {
+      resource: 'callback',
+      operation: 'answerQuery',
+      queryId: expr('{{ $json.callbackQueryId }}'),
+      additionalFields: {}
+    },
+    credentials: { telegramApi: newCredential('Telegram Bot') }
+  }
+});
+
+const mergeAfterCallback = merge({
+  version: 3.2,
+  config: {
+    name: 'Merge',
+    position: [520, 300],
+    parameters: { mode: 'append' }
+  }
+});
+
+const isStartMenu = ${equalsIf('Is /start menu?', 'intent', 'menu.start', '760, 300')};
+
+const sendStartMenu = node({
+  type: 'n8n-nodes-base.telegram',
+  version: 1.2,
+  config: {
+    name: 'Send Start Menu',
+    position: [1000, 300],
+    credentials: { telegramApi: newCredential('Telegram Bot') },
+    parameters: {
+      resource: 'message',
+      operation: 'sendMessage',
+      chatId: expr('{{ $json.chatId }}'),
+      text: '<b>🏨 Hotel Booking Bot</b>\\n\\nWhat would you like to do?',
+      replyMarkup: 'inlineKeyboard',
+      inlineKeyboard: {
+        rows: [
+          {
+            row: {
+              buttons: [
+                { text: '🏨 Hotels', additionalFields: { callback_data: 'hotels' } },
+                { text: '📋 My Bookings', additionalFields: { callback_data: 'mybookings' } }
+              ]
+            }
+          },
+          {
+            row: {
+              buttons: [
+                { text: '👤 Me', additionalFields: { callback_data: 'me' } },
+                { text: '🔑 Login', additionalFields: { callback_data: 'login' } }
+              ]
+            }
+          }
+        ]
+      },
+      additionalFields: {
+        parse_mode: 'HTML',
+        appendAttribution: false,
+        disable_web_page_preview: true
+      }
+    }
+  }
+});
+
+const credentialsCheck = ${boolIf('Credentials in the message?', 'deleteUserMessage', '1000, 520')};
 
 const deleteCredentialMessage = node({
   type: 'n8n-nodes-base.telegram',
   version: 1.2,
   config: {
     name: 'Delete Credential Message',
-    position: [520, 640],
+    position: [1240, 520],
     // Deleting fails in groups without admin rights, and on old messages.
     // That must never take the reply down with it.
     onError: 'continueRegularOutput',
@@ -82,14 +177,14 @@ const deleteCredentialMessage = node({
   }
 });
 
-const tokenCheck = ${boolIf('Access token expired?', 'tokenRefreshNeeded', '260, 300')};
+const tokenCheck = ${boolIf('Access token expired?', 'tokenRefreshNeeded', '1000, 380')};
 
 const refreshToken = node({
   type: 'n8n-nodes-base.httpRequest',
   version: 4.2,
   config: {
     name: 'Refresh Token',
-    position: [520, 180],
+    position: [1240, 260],
     onError: 'continueRegularOutput',
     parameters: {
       method: 'POST',
@@ -108,19 +203,19 @@ const applyTokens = node({
   version: 2,
   config: {
     name: 'Apply Tokens',
-    position: [760, 180],
+    position: [1480, 260],
     parameters: { mode: 'runOnceForAllItems', jsCode: ${code('apply-tokens.js')} }
   }
 });
 
-const needsApi = ${boolIf('Needs the API?', 'hasApi', '1000, 380')};
+const needsApi = ${boolIf('Needs the API?', 'hasApi', '1720, 380')};
 
 const bookingApi = node({
   type: 'n8n-nodes-base.httpRequest',
   version: 4.2,
   config: {
     name: 'Booking API',
-    position: [1240, 280],
+    position: [1960, 280],
     onError: 'continueRegularOutput',
     parameters: {
       method: expr('{{ $json.api.method }}'),
@@ -147,7 +242,7 @@ const formatReply = node({
   version: 2,
   config: {
     name: 'Format Reply',
-    position: [1480, 280],
+    position: [2200, 280],
     parameters: { mode: 'runOnceForAllItems', jsCode: ${code('format-reply.js')} }
   }
 });
@@ -157,7 +252,7 @@ const sendReply = node({
   version: 1.2,
   config: {
     name: 'Send Reply',
-    position: [1740, 380],
+    position: [2440, 380],
     parameters: {
       resource: 'message',
       operation: 'sendMessage',
@@ -176,12 +271,18 @@ const sendReply = node({
 export default workflow('hotel-booking-telegram-bot', 'Hotel Booking — Telegram Bot')
   .add(telegramTrigger)
   .to(router)
-  .add(router)
-  .to(credentialsCheck.onTrue(deleteCredentialMessage))
-  .add(router)
-  .to(tokenCheck
-    .onTrue(refreshToken.to(applyTokens).to(needsApi))
-    .onFalse(needsApi))
+  .to(isCallback
+    .onTrue(answerCallback.to(mergeAfterCallback.input(0)))
+    .onFalse(mergeAfterCallback.input(1)))
+  .add(mergeAfterCallback)
+  .to(isStartMenu
+    .onTrue(sendStartMenu)
+    .onFalse(credentialsCheck.onTrue(deleteCredentialMessage)))
+  .add(mergeAfterCallback)
+  .to(isStartMenu
+    .onFalse(tokenCheck
+      .onTrue(refreshToken.to(applyTokens).to(needsApi))
+      .onFalse(needsApi)))
   .add(needsApi
     .onTrue(bookingApi.to(formatReply).to(sendReply))
     .onFalse(sendReply));

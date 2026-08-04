@@ -324,7 +324,11 @@ function route(session, text) {
   const cmd = parts[0].toLowerCase().replace(/@.*$/, '');
   const args = parts.slice(1);
 
-  if (cmd === '/start' || cmd === '/help') {
+  if (cmd === '/start') {
+    return say('menu.start', 'Welcome! Choose an option:', { menu: 'start' });
+  }
+
+  if (cmd === '/help') {
     return say('help', HELP);
   }
 
@@ -468,14 +472,30 @@ const results = [];
 for (const item of $input.all()) {
   const update = item.json || {};
   const message = update.message || update.edited_message;
+  const callbackQuery = update.callback_query;
 
-  // Ignore anything that is not a plain text message.
-  if (!message || !message.chat || typeof message.text !== 'string') continue;
+  let chatId;
+  let messageId;
+  let text;
+  let isCallback = false;
+  let callbackQueryId;
 
-  const chatId = String(message.chat.id);
-  const messageId = message.message_id;
-  const text = message.text.trim();
-  if (!text) continue;
+  if (callbackQuery) {
+    isCallback = true;
+    callbackQueryId = callbackQuery.id;
+    const msg = callbackQuery.message || {};
+    chatId = msg.chat && String(msg.chat.id);
+    messageId = msg.message_id;
+    text = '/' + (callbackQuery.data || '').trim();
+  } else if (message && message.chat && typeof message.text === 'string') {
+    chatId = String(message.chat.id);
+    messageId = message.message_id;
+    text = message.text.trim();
+  } else {
+    continue;
+  }
+
+  if (!chatId || !text) continue;
 
   if (ALLOWED_CHAT_IDS.length && ALLOWED_CHAT_IDS.indexOf(chatId) === -1) {
     results.push({
@@ -529,6 +549,8 @@ for (const item of $input.all()) {
     deleteUserMessage: Boolean(plan.sensitive),
     accessTokenTtlMs: ACCESS_TOKEN_TTL_MS,
     pageSize: PAGE_SIZE,
+    isCallback,
+    callbackQueryId,
   });
 }
 

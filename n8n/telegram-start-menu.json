@@ -1,0 +1,316 @@
+{
+  "name": "Telegram Start Menu with Inline Keyboard",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "message",
+          "callback_query"
+        ],
+        "additionalFields": {}
+      },
+      "id": "a1000000-0000-4000-8000-000000000001",
+      "name": "Telegram Trigger",
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.5,
+      "position": [
+        -220,
+        300
+      ],
+      "webhookId": "c0ffee00-0000-4000-8000-00000000cafe"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const update = $input.first().json || {};\n\nconst isCallback = !!update.callback_query;\nconst chatId = isCallback\n  ? update.callback_query?.message?.chat?.id\n  : update.message?.chat?.id;\nconst messageId = isCallback\n  ? update.callback_query?.message?.message_id\n  : update.message?.message_id;\nconst text = isCallback\n  ? update.callback_query?.data\n  : (update.message?.text || '').trim();\nconst username = isCallback\n  ? update.callback_query?.from?.username\n  : update.message?.from?.username;\n\nreturn [{\n  json: {\n    chatId,\n    messageId,\n    text,\n    username,\n    isCallback,\n    callbackQueryId: update.callback_query?.id\n  }\n}];"
+      },
+      "id": "a1000000-0000-4000-8000-000000000002",
+      "name": "Parse Update",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        20,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "b0000000-0000-4000-8000-000000000001",
+              "leftValue": "={{ $json.text }}",
+              "rightValue": "/start",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "id": "a1000000-0000-4000-8000-000000000003",
+      "name": "Is /start?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        260,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "sendMessage",
+        "chatId": "={{ $json.chatId }}",
+        "text": "<b>Welcome to the Hotel Booking Bot!</b>\n\nChoose an option below:",
+        "replyMarkup": "inlineKeyboard",
+        "inlineKeyboard": {
+          "rows": [
+            {
+              "row": {
+                "buttons": [
+                  {
+                    "text": "❓ FAQ",
+                    "additionalFields": {
+                      "callback_data": "faq"
+                    }
+                  },
+                  {
+                    "text": "📖 Instructions",
+                    "additionalFields": {
+                      "callback_data": "instructions"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "row": {
+                "buttons": [
+                  {
+                    "text": "💬 Group Chat",
+                    "additionalFields": {
+                      "url": "https://t.me/yourgroup"
+                    }
+                  },
+                  {
+                    "text": "💬 Contact Me",
+                    "additionalFields": {
+                      "url": "https://t.me/yourusername"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "row": {
+                "buttons": [
+                  {
+                    "text": "👤 Login",
+                    "additionalFields": {
+                      "callback_data": "login"
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "additionalFields": {
+          "parse_mode": "HTML",
+          "appendAttribution": false,
+          "disable_web_page_preview": true
+        }
+      },
+      "id": "a1000000-0000-4000-8000-000000000004",
+      "name": "Send Start Menu",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        520,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "b0000000-0000-4000-8000-000000000002",
+              "leftValue": "={{ $json.isCallback }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "id": "a1000000-0000-4000-8000-000000000005",
+      "name": "Is Callback?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        260,
+        520
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const item = $input.first().json || {};\nconst data = item.text || '';\nlet answerText = '';\nlet showAlert = false;\n\nswitch (data) {\n  case 'faq':\n    answerText = 'Here are the most common questions...';\n    break;\n  case 'instructions':\n    answerText = 'Instructions will be sent shortly.';\n    break;\n  case 'login':\n    answerText = 'Please use /login to sign in.';\n    break;\n  default:\n    answerText = 'Unknown option.';\n}\n\nreturn [{\n  json: {\n    chatId: item.chatId,\n    queryId: item.callbackQueryId,\n    answerText,\n    showAlert\n  }\n}];"
+      },
+      "id": "a1000000-0000-4000-8000-000000000006",
+      "name": "Build Callback Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        520,
+        520
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "callback",
+        "operation": "answerQuery",
+        "queryId": "={{ $json.queryId }}",
+        "additionalFields": {
+          "text": "={{ $json.answerText }}",
+          "show_alert": "={{ $json.showAlert }}"
+        }
+      },
+      "id": "a1000000-0000-4000-8000-000000000007",
+      "name": "Answer Callback",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        760,
+        520
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "sendMessage",
+        "chatId": "={{ $json.chatId }}",
+        "text": "={{ $json.answerText }}",
+        "additionalFields": {
+          "parse_mode": "HTML",
+          "appendAttribution": false,
+          "disable_web_page_preview": true
+        }
+      },
+      "id": "a1000000-0000-4000-8000-000000000008",
+      "name": "Send Callback Message",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1000,
+        520
+      ],
+      "onError": "continueRegularOutput"
+    }
+  ],
+  "connections": {
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Parse Update",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Update": {
+      "main": [
+        [
+          {
+            "node": "Is /start?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is /start?": {
+      "main": [
+        [
+          {
+            "node": "Send Start Menu",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Is Callback?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Callback?": {
+      "main": [
+        [
+          {
+            "node": "Build Callback Response",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Build Callback Response": {
+      "main": [
+        [
+          {
+            "node": "Answer Callback",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Answer Callback": {
+      "main": [
+        [
+          {
+            "node": "Send Callback Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {}
+}
